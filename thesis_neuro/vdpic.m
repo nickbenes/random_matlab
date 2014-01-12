@@ -1,0 +1,90 @@
+% vdpic.m
+% Follows N initial conditions around a ring on the attracting branch of a
+% singular manifold.  ICs evolve according to a modified version of the van
+% der Pol oscillator.  Two figures are plotted: Figure 10 plots radius vs.
+% height of the trajectories; Figure 11 plots initial condition vs. max
+% height, along with a reference height of 1.
+%
+% a,b, and epsilon are as in the rotating van der pol model, and N is the
+% number of initial conditions to follow (evenly distributed around a 
+% circle). "out" is an N by T by 3 array, where T is the length of the time
+% vector; e.g. "out(i,:,1)" is the time series for the x coordinate of the 
+% i-th initial condition, "out(i,:,2)" is the corresponding y coordinate, 
+% etc. "r" is an N by T array of the radial distances, and "sup" is a 
+% vector of length N storing the maximum of each initial condition.
+% 
+% Nick Benes, 18 Dec 2009
+% Revised 20 Jan 2010 to include smaller error tolerances
+
+function [out r sup]=vdpic(a,b,eps,N)
+
+%clear all; 
+figure(10); figure(11); figure(12);
+close([10 11 12]);
+
+N=N+1;
+%a=0.99403; b=.001; eps=.1;
+%N=50;
+colors=colormap(hsv(N));
+
+options=odeset('RelTol',1e-5);
+
+tf=30; dt=.01;
+%tolin=0.5; tolout=0.1;
+
+tspan=0:dt:tf;
+angles=linspace(0,2*pi,N);
+%angles=linspace(0,pi/4,N);
+out=zeros(N,3*length(tspan),3);
+r=zeros(N,3*length(tspan));
+sup=zeros(N,1);
+
+outer=(1+sqrt(3))/2;
+shootx=outer*cos(angles);
+shooty=outer*sin(angles);
+shootz=linspace(.5,.5,N);
+shoot=[shootx; shooty; shootz];
+
+for i=1:N
+    [t,x1]=ode45(@(t,x) rotvdp(t,x,eps,a,b),tspan,shoot(:,i)',options);
+    [t,x2]=ode45(@(t,x) rotvdp(t,x,eps,a,b),tspan,x1(end,:),options);
+    [t,x3]=ode45(@(t,x) rotvdp(t,x,eps,a,b),tspan,x2(end,:),options);
+    x=[x1; x2; x3];
+    out(i,:,:)=x;
+    [inf ind]=min(x(:,3));
+    sup(i)=max(x(ind:end,3));
+end
+
+
+for j=1:N
+    figure(10)
+    r(j,:)=(out(j,:,1).^2+out(j,:,2).^2).^(1/2);
+    plot(r(j,:),out(j,:,3),'Color',colors(j,:));
+    hold on;    
+end
+
+
+figure(11)
+plot3(cos(angles),sin(angles),sup);
+hold on;
+plot3(cos(angles),sin(angles),ones(1,N),'Color','k');
+
+figure(12)
+plot(angles,sup);
+hold on;
+plot(angles,ones(1,N),'Color','k');
+
+
+%% rotvdp
+function xdot=rotvdp(t,x,eps,a,b)
+% Differential equations for rotating van der Pol system
+% Used by Barry, Benes, Burke, Kaper, and Kramer
+% Based on rotating the van der Pol oscillator about the z-axis
+% x(1)=x, x(2)=y, x(3)=z
+% good parameters: a=0.99403 +/- 1e-5 (maybe 1.5?); b=.001; eps=.1;
+
+xdot(1) = (x(3) - (2*(x(1).^2 + x(2).^2).^(3/2) - 3*(x(1).^2 + x(2).^2) + 1)).*x(1) - x(3).*x(2); 
+xdot(2) = (x(3) - (2*(x(1).^2 + x(2).^2).^(3/2) - 3*(x(1).^2 + x(2).^2) + 1)).*x(2) + x(3).*x(1); 
+xdot(3) = eps.*(a - ((x(1) - b).^2 + x(2).^2).^(1/2));
+
+xdot=xdot';

@@ -1,0 +1,53 @@
+#The Purkinje cell model from:
+#  M. A. Kramer, R. D. Traub, N. J. Kopell, 'New dynamics in cerebellar Purkinje cells: limit cycle canards', submitted, 2008.
+#
+#More info:
+#  http://makramer.info
+#
+#June 23, 2008.  MAK
+
+# For J=-33, S-N of limit cycles is at mKMd=0.5381
+# Unstable limit cycles collapse in hom. bif near 0.4126
+# For Matlab data, we'll use mKMd=0.42 and 0.5381
+# Stable l.c. has period ~ 1.66
+# Unstable l.c. has period ~  
+# S-N l.c. has period ~ 1.87
+
+
+
+gNaF=125.0
+gKDR=10.0
+
+minf(V)=1.0/(1.0 + Exp((-V-34.5)/10.0))
+ah(V)=(1.0/(1.0 + Exp( (V+59.4)/10.7 ))) / (0.15 + 1.15 / (1.0 + Exp( (V+33.5)/15.0 )))
+bh(V)=(1.0 - 1.0 / (1.0 + Exp( (V+59.4)/10.7 ))) / (0.15 + 1.15 / (1.0 + Exp( (V+33.5)/15.0 )))
+am(V)=(1.0 / (1.0 + Exp( (-V-29.5)/10.0 ))) / (0.25 + 4.35*Exp(-abs(V+10.0)/10.0))
+bm(V)=(1.0 - 1.0 / (1.0 + Exp( (-V-29.5)/10.0 ))) / (0.25 + 4.35*Exp(-abs(V+10.0)/10.0))
+aKM(V) = 0.02/(1.0 + Exp((-20 - V)/5.))
+bKM(V) = 0.01*Exp((-43 - V)/18.)
+
+dVd/dt = -(-J -(95 + Vd)*(gKMd*mKMd) -gCaH*mCaHd^2*(-125 + Vd) -gL*(70 + Vd) -gNaF*minf(Vd)^3.0*hd*(-50.0 + Vd) -gKDR*md^4.0*(95.0 + Vd))
+dhd/dt = (ah(Vd)*(1-hd) - bh(Vd)*hd)
+dmd/dt = -(am(Vd)*(1-md) - bm(Vd)*md)
+dmCaHd/dt= -((1.6*(1 - mCaHd))/(1 + Exp(-0.072*(-5 + Vd))) - (0.02*mCaHd*(8.9 + Vd))/(-1 + Exp((8.9 + Vd)/5.)))
+#dmKMd/dt= aKM(Vd)*(1-mKMd) - bKM(Vd)*mKMd
+
+Vd(0)=17.7
+hd(0)=0.0487
+md(0)=0.4291
+mCaHd(0)=0.3942
+#mKMd(0)=0.0
+
+param mKMd=.5381
+param J=-33.0
+param gCaH=1.0
+param gKMd=0.75
+param gL=2.0
+
+
+@ Total=100
+@ dt=0.005
+@ dsmin=0.001, ds=-0.01, dsmax=0.1, autoxmin=-5.0, autoxmax=12.0, autoymin=-100.0, autoymax=20.0
+@ nmax=999, parmin=-5.0, parmax=12.0
+@ ylo=-60, yhi=40, xlo=0, xhi=100
+done
